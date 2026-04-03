@@ -45,11 +45,16 @@ export const apiRequest = async (
   }
 
   const response = await fetch(`${API_URL}${endpoint}`, config);
-
+  if (response.status === 401) {
+    removeAuthToken();
+    window.location.href = "/login";
+  }
   let result;
   try {
     result = await response.json();
-  } catch (err) {}
+  } catch (err) {
+    console.warn("Error parsing JSON response:", err);
+  }
 
   if (!response.ok) {
     throw new Error(result?.message || "Something went wrong");
