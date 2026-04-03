@@ -91,7 +91,14 @@ export default function Navbar() {
             </Link>
           ))}
           <Link
-            href="#pricing"
+            href="/login"
+            onClick={() => setMenuOpen(false)}
+            className="mt-2 py-2.5 text-sm font-semibold text-white gradient-bg rounded-xl text-center cursor-pointer"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/register"
             onClick={() => setMenuOpen(false)}
             className="mt-2 py-2.5 text-sm font-semibold text-white gradient-bg rounded-xl text-center cursor-pointer"
           >
