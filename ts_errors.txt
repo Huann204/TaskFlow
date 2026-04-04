@@ -1,0 +1,2 @@
+src/app/dashboard/team/page.tsx(37,24): error TS2552: Cannot find name 'useRemoveMember'. Did you mean 'removeMember'?
+src/app/dashboard/team/page.tsx(38,24): error TS2552: Cannot find name 'useUpdateMember'. Did you mean 'updateMember'?

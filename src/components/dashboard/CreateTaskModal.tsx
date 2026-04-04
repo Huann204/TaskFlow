@@ -10,9 +10,13 @@ import {
   Calendar,
   Flag,
   Plus,
+  UserCircle2,
 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api";
+import { useTeam } from "@/hooks/useTeam";
+import { useWorkspace } from "@/hooks/useWorkspace";
+import { type Task } from "@/types";
 
 const PRIORITIES = [
   {
@@ -50,7 +54,16 @@ const TAGS_OPTIONS = [
 interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  taskToEdit?: any; // Add taskToEdit
+  taskToEdit?: any;
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
 
 export default function CreateTaskModal({
@@ -64,7 +77,11 @@ export default function CreateTaskModal({
     priority: "medium",
     dueDate: "",
     tags: [] as string[],
+    assignedTo: "" as string,
   });
+
+  const { activeWorkspaceId } = useWorkspace();
+  const { data: team } = useTeam(activeWorkspaceId);
 
   useEffect(() => {
     if (taskToEdit) {
@@ -74,6 +91,7 @@ export default function CreateTaskModal({
         priority: taskToEdit.priority || "medium",
         dueDate: taskToEdit.dueDate ? new Date(taskToEdit.dueDate).toISOString().split("T")[0] : "",
         tags: taskToEdit.tags || [],
+        assignedTo: taskToEdit.assignedTo?.id || "",
       });
     } else {
       setForm({
@@ -82,9 +100,11 @@ export default function CreateTaskModal({
         priority: "medium",
         dueDate: "",
         tags: [] as string[],
+        assignedTo: "",
       });
     }
   }, [taskToEdit, isOpen]);
+
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -95,12 +115,13 @@ export default function CreateTaskModal({
     mutationFn: (newTask: any) =>
       apiRequest("/tasks", {
         method: "POST",
-        data: newTask,
+        data: { ...newTask, workspaceId: activeWorkspaceId },
       }),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", activeWorkspaceId] });
     },
   });
+
   const updateTaskMutation = useMutation({
     mutationFn: (updatedTask: any) =>
       apiRequest(`/tasks/${taskToEdit.id}`, {
@@ -108,7 +129,7 @@ export default function CreateTaskModal({
         data: updatedTask,
       }),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", activeWorkspaceId] });
     },
   });
 
@@ -146,13 +167,15 @@ export default function CreateTaskModal({
     if (!form.title.trim()) return;
     setSaving(true);
     try {
+      const payload = {
+        ...form,
+        assignedTo: form.assignedTo || null,
+      };
       if (taskToEdit) {
-        await updateTaskMutation.mutateAsync({
-          ...form,
-        });
+        await updateTaskMutation.mutateAsync(payload);
       } else {
         await createTaskMutation.mutateAsync({
-          ...form,
+          ...payload,
           status: "todo",
         });
       }
@@ -162,10 +185,11 @@ export default function CreateTaskModal({
         priority: "medium",
         dueDate: "",
         tags: [],
+        assignedTo: "",
       });
       onClose();
     } catch (error) {
-      console.error("Task creation failed:", error);
+      console.error("Task save failed:", error);
     } finally {
       setSaving(false);
     }
@@ -177,6 +201,8 @@ export default function CreateTaskModal({
         ? "border-[#7C3AED]/60 shadow-[0_0_0_3px_rgba(124,58,237,0.12)]"
         : "border-white/10 hover:border-white/20"
     }`;
+
+  const activeMembers = team?.members.filter((m) => m.status === "active") ?? [];
 
   return (
     <>
@@ -194,7 +220,7 @@ export default function CreateTaskModal({
         aria-labelledby="create-task-title"
         className="fixed inset-0 z-50 flex items-center justify-center p-4"
       >
-        <div className="glass-card w-full max-w-lg p-6 animate-fade-up shadow-2xl shadow-black/40 border border-white/10">
+        <div className="glass-card w-full max-w-lg p-6 animate-fade-up shadow-2xl shadow-black/40 border border-white/10 max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2.5">
@@ -324,6 +350,34 @@ export default function CreateTaskModal({
                   className={`${inputBase("date")} px-3 py-2 [color-scheme:dark]`}
                 />
               </div>
+            </div>
+
+            {/* Assign to */}
+            <div>
+              <label
+                htmlFor="task-assignee"
+                className="flex items-center gap-1.5 text-xs font-medium text-[#94A3B8] mb-1.5"
+              >
+                <UserCircle2 size={12} />
+                Assign to
+              </label>
+              <select
+                id="task-assignee"
+                value={form.assignedTo}
+                onChange={(e) => update("assignedTo", e.target.value)}
+                onFocus={() => setFocusedField("assignee")}
+                onBlur={() => setFocusedField(null)}
+                className={`${inputBase("assignee")} px-3 py-2.5 cursor-pointer`}
+              >
+                <option value="">Unassigned</option>
+                {activeMembers
+                  .filter((m) => m.user.id !== null)
+                  .map((m) => (
+                    <option key={m.user.id!} value={m.user.id!}>
+                      {m.user.name} ({m.role})
+                    </option>
+                  ))}
+              </select>
             </div>
 
             {/* Tags */}

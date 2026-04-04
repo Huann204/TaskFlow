@@ -1,4 +1,4 @@
-import { X, Calendar, Flag, AlignLeft, Tag } from "lucide-react";
+import { X, Calendar, Flag, AlignLeft, Tag, UserCircle2 } from "lucide-react";
 import { type Task } from "@/types";
 
 const PRIORITIES = [
@@ -63,7 +63,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onEdit }: TaskD
           <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-8">
             
             {/* Status Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
                 <p className="text-xs font-medium text-[#64748B] mb-1.5 uppercase tracking-wide">Status</p>
                 <div className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-white/5 text-[#F8FAFC] border border-white/10 capitalize">
@@ -85,6 +85,20 @@ export default function TaskDetailModal({ task, isOpen, onClose, onEdit }: TaskD
                     weekday: "short", month: "short", day: "numeric", year: "numeric"
                   }) : "No date set"}
                 </div>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-[#64748B] mb-1.5 uppercase tracking-wide">Assigned To</p>
+                {task.assignedTo ? (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-[#7C3AED]/10 border border-[#7C3AED]/20 text-[#A78BFA]">
+                    <UserCircle2 size={12} />
+                    {task.assignedTo.name}
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-white/5 border border-white/10 text-[#64748B]">
+                    <UserCircle2 size={12} />
+                    Unassigned
+                  </div>
+                )}
               </div>
             </div>
 

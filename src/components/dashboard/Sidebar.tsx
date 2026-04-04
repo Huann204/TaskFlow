@@ -13,14 +13,24 @@ import {
   ChevronRight,
   Users,
   Sparkles,
+  Settings2,
 } from "lucide-react";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Tasks", href: "/dashboard/tasks", icon: CheckSquare },
   { label: "AI Assistant", href: "/dashboard/ai", icon: MessageSquareText },
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+];
+
+const teamNavItems = [
   { label: "Team", href: "/dashboard/team", icon: Users },
+  { label: "Settings", href: "/dashboard/settings", icon: Settings },
+];
+
+const personalNavItems = [
+  { label: "Workspace", href: "/dashboard/team", icon: Settings2 },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -31,6 +41,7 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const { activeWorkspace } = useWorkspace();
 
   return (
     <aside
@@ -57,7 +68,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             Workspace
           </p>
         )}
-        {navItems.map(({ label, href, icon: Icon }) => {
+        {[...navItems, ...(activeWorkspace?.type === 'personal' ? personalNavItems : teamNavItems)].map(({ label, href, icon: Icon }) => {
           const active = pathname === href;
           return (
             <Link
