@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MoreHorizontal, Trash2, ChevronDown, Clock, CheckCircle2 } from "lucide-react";
 import { useUpdateMember, useRemoveMember } from "@/hooks/useTeam";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { useToast } from "@/hooks/useToast";
 import type { TeamMember, TeamRole } from "@/types";
 
 const ROLE_CONFIG: Record<TeamRole, { label: string; color: string; bg: string }> = {
@@ -48,26 +49,42 @@ export default function MemberCard({ member, isMe, isOwner, canManage }: MemberC
   const { activeWorkspaceId } = useWorkspace();
   const updateMember = useUpdateMember(activeWorkspaceId);
   const removeMember = useRemoveMember(activeWorkspaceId);
+  const toast = useToast();
 
   const roleConfig = ROLE_CONFIG[member.role];
   const initials = getInitials(member.user.name);
   const avatarGrad = getAvatarColor(member.user.name);
 
   const handleRoleChange = (role: TeamRole) => {
-    updateMember.mutate({ memberId: member.id, role });
+    updateMember.mutate(
+      { memberId: member.id, role },
+      {
+        onSuccess: () => toast.success(`${member.user.name}'s role updated to ${ROLE_CONFIG[role].label}`),
+        onError: () => toast.error("Failed to update role. Please try again."),
+      }
+    );
     setRoleMenuOpen(false);
     setMenuOpen(false);
   };
 
   const handleRemove = () => {
     if (confirm(`Remove ${member.user.name} from the team?`)) {
-      removeMember.mutate(member.id);
+      removeMember.mutate(member.id, {
+        onSuccess: () => toast.success(`${member.user.name} has been removed from the team.`),
+        onError: () => toast.error("Failed to remove member. Please try again."),
+      });
     }
     setMenuOpen(false);
   };
 
   const handleActivate = () => {
-    updateMember.mutate({ memberId: member.id, status: "active" });
+    updateMember.mutate(
+      { memberId: member.id, status: "active" },
+      {
+        onSuccess: () => toast.success(`${member.user.name} is now active.`),
+        onError: () => toast.error("Failed to activate member. Please try again."),
+      }
+    );
     setMenuOpen(false);
   };
 

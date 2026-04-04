@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, UserPlus, Loader2, Mail, Shield } from "lucide-react";
 import { useInviteMember } from "@/hooks/useTeam";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { useToast } from "@/hooks/useToast";
 import type { TeamRole } from "@/types";
 
 interface InviteModalProps {
@@ -24,6 +25,7 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
 
   const { activeWorkspaceId } = useWorkspace();
   const invite = useInviteMember(activeWorkspaceId);
+  const toast = useToast();
 
   if (!isOpen) return null;
 
@@ -34,11 +36,14 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
 
     try {
       await invite.mutateAsync({ email: email.trim(), role });
+      toast.success(`Invitation sent to ${email.trim()}!`);
       setEmail("");
       setRole("member");
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to invite member");
+      const message = err.message || "Failed to invite member";
+      setError(message);
+      toast.error(message);
     }
   };
 

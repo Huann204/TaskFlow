@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/api";
 import { Edit2, Check, X, AlertTriangle, LogOut, Trash2 } from "lucide-react";
 import MemberCard from "@/components/team/MemberCard";
 import InviteModal from "@/components/team/InviteModal";
+import { useToast } from "@/hooks/useToast";
 
 function SkeletonCard() {
   return (
@@ -38,15 +39,23 @@ export default function TeamPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState("");
 
+  const toast = useToast();
   const updateWorkspaceMutation = useUpdateWorkspace();
   const deleteTeamMutation = useDeleteWorkspace();
   const removeMemberMutation = useRemoveMember(activeWorkspaceId);
 
   const handleRenameTeam = () => {
     if (editName.trim() && editName !== team?.name && activeWorkspaceId) {
-      updateWorkspaceMutation.mutate({ id: activeWorkspaceId, data: { name: editName.trim() } }, {
-        onSuccess: () => setIsEditingName(false)
-      });
+      updateWorkspaceMutation.mutate(
+        { id: activeWorkspaceId, data: { name: editName.trim() } },
+        {
+          onSuccess: () => {
+            toast.success(`Workspace renamed to "${editName.trim()}"`);
+            setIsEditingName(false);
+          },
+          onError: () => toast.error("Failed to rename workspace. Please try again."),
+        }
+      );
     } else {
       setIsEditingName(false);
     }
@@ -363,13 +372,19 @@ export default function TeamPage() {
                onClick={() => {
                   if (canDelete) {
                      if (confirm("Are you entirely sure you want to permanently delete this workspace?")) {
-                        deleteTeamMutation.mutate(team.id);
+                        deleteTeamMutation.mutate(team.id, {
+                          onSuccess: () => toast.success("Workspace deleted successfully."),
+                          onError: () => toast.error("Failed to delete workspace. Please try again."),
+                        });
                      }
                   } else {
                      if (confirm("Are you sure you want to leave this workspace?")) {
                         const myMember = team.members.find(m => m.user?.id === me.id);
                         if (myMember) {
-                           removeMemberMutation.mutate(myMember.id);
+                           removeMemberMutation.mutate(myMember.id, {
+                             onSuccess: () => toast.info("You have left the workspace."),
+                             onError: () => toast.error("Failed to leave workspace. Please try again."),
+                           });
                         }
                      }
                   }

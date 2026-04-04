@@ -16,6 +16,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api";
 import { useTeam } from "@/hooks/useTeam";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { useToast } from "@/hooks/useToast";
 import { type Task } from "@/types";
 
 const PRIORITIES = [
@@ -110,6 +111,7 @@ export default function CreateTaskModal({
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const createTaskMutation = useMutation({
     mutationFn: (newTask: any) =>
@@ -156,8 +158,10 @@ export default function CreateTaskModal({
         data: { prompt: form.title },
       });
       update("description", data.result);
+      toast.success("AI description generated!");
     } catch (error) {
       console.error("AI Generation failed:", error);
+      toast.error("AI generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -173,11 +177,13 @@ export default function CreateTaskModal({
       };
       if (taskToEdit) {
         await updateTaskMutation.mutateAsync(payload);
+        toast.success(`Task "${form.title}" updated successfully!`);
       } else {
         await createTaskMutation.mutateAsync({
           ...payload,
           status: "todo",
         });
+        toast.success(`Task "${form.title}" created!`);
       }
       setForm({
         title: "",
@@ -190,6 +196,7 @@ export default function CreateTaskModal({
       onClose();
     } catch (error) {
       console.error("Task save failed:", error);
+      toast.error(taskToEdit ? "Failed to update task." : "Failed to create task.");
     } finally {
       setSaving(false);
     }

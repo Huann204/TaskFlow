@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Briefcase, User, Sparkles, Plus } from "lucide-react";
 import { useCreateWorkspace, useWorkspace } from "@/hooks/useWorkspace";
+import { useToast } from "@/hooks/useToast";
 
 interface CreateWorkspaceModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export default function CreateWorkspaceModal({
   const [type, setType] = useState<"personal" | "team">("personal");
   const { setWorkspace } = useWorkspace();
   const createMutation = useCreateWorkspace();
+  const toast = useToast();
 
   if (!isOpen) return null;
 
@@ -31,10 +33,12 @@ export default function CreateWorkspaceModal({
           if (newWorkspace?.id) {
             setWorkspace(newWorkspace.id);
           }
+          toast.success(`Workspace "${name.trim()}" created!`);
           setName("");
           setType("personal");
           onClose();
         },
+        onError: () => toast.error("Failed to create workspace. Please try again."),
       }
     );
   };

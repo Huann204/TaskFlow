@@ -20,6 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest, removeAuthToken } from "@/lib/api";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { useInvitations, useAcceptInvitation, useDeclineInvitation } from "@/hooks/useTeam";
+import { useToast } from "@/hooks/useToast";
 import CreateWorkspaceModal from "./CreateWorkspaceModal";
 
 export default function TopHeader() {
@@ -37,6 +38,7 @@ export default function TopHeader() {
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
+  const toast = useToast();
   const { data: invitations } = useInvitations();
   const acceptInviteMutation = useAcceptInvitation();
   const declineInviteMutation = useDeclineInvitation();
@@ -151,14 +153,20 @@ export default function TopHeader() {
                                 </p>
                                 <div className="flex items-center gap-2">
                                    <button 
-                                      onClick={() => acceptInviteMutation.mutate(inv.teamId)}
+                                       onClick={() => acceptInviteMutation.mutate(inv.teamId, {
+                                         onSuccess: () => { toast.success(`Joined "${inv.teamName}" workspace!`); setNotificationsOpen(false); },
+                                         onError: () => toast.error("Failed to accept invitation."),
+                                       })}
                                       disabled={acceptInviteMutation.isPending}
                                       className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold transition-all"
                                    >
                                       <Check size={12} /> Accept
                                    </button>
                                    <button 
-                                      onClick={() => declineInviteMutation.mutate(inv.teamId)}
+                                       onClick={() => declineInviteMutation.mutate(inv.teamId, {
+                                         onSuccess: () => toast.info(`Invitation from "${inv.teamName}" declined.`),
+                                         onError: () => toast.error("Failed to decline invitation."),
+                                       })}
                                       disabled={declineInviteMutation.isPending}
                                       className="flex-1 flex items-center justify-center py-1.5 bg-white/5 hover:bg-white/10 text-[#94A3B8] hover:text-white rounded-lg text-xs font-semibold transition-all"
                                    >

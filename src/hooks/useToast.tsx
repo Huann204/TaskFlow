@@ -1,6 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, ReactNode, ReactElement } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode,
+  ReactElement,
+  useEffect,
+} from "react";
 import { AlertColor, Snackbar, Alert, styled } from "@mui/material";
 
 interface ToastContextType {
@@ -56,16 +64,24 @@ const ToastContainer = (props: ToastContainerProps) => {
       open={props.open}
       autoHideDuration={5000}
       onClose={props.onClose}
-      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      anchorOrigin={{ vertical: "top", horizontal: "center" }}
     >
-      <StyledAlert onClose={props.onClose} severity={props.severity} variant="standard">
+      <StyledAlert
+        onClose={props.onClose}
+        severity={props.severity}
+        variant="standard"
+      >
         {props.message}
       </StyledAlert>
     </Snackbar>
   );
 };
 
-export const ToastProvider = ({ children }: { children: ReactNode }): ReactElement => {
+export const ToastProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}): ReactElement => {
   const [toastState, setToastState] = useState<{
     open: boolean;
     message: string;
@@ -80,27 +96,46 @@ export const ToastProvider = ({ children }: { children: ReactNode }): ReactEleme
     setToastState((prev) => ({ ...prev, open: false }));
   }, []);
 
-  const showToast = useCallback((message: string, severity: AlertColor = "info") => {
-    setToastState({
-      open: true,
-      message,
-      severity,
-    });
-  }, []);
+  useEffect(() => {
+    console.log("Toast state:", toastState);
+  }, [toastState]);
 
-  const success = useCallback((msg: string) => showToast(msg, "success"), [showToast]);
-  const error = useCallback((msg: string) => showToast(msg, "error"), [showToast]);
-  const warn = useCallback((msg: string) => showToast(msg, "warning"), [showToast]);
-  const info = useCallback((msg: string) => showToast(msg, "info"), [showToast]);
+  const showToast = useCallback(
+    (message: string, severity: AlertColor = "info") => {
+      setToastState({
+        open: true,
+        message,
+        severity,
+      });
+    },
+    [],
+  );
+
+  const success = useCallback(
+    (msg: string) => showToast(msg, "success"),
+    [showToast],
+  );
+  const error = useCallback(
+    (msg: string) => showToast(msg, "error"),
+    [showToast],
+  );
+  const warn = useCallback(
+    (msg: string) => showToast(msg, "warning"),
+    [showToast],
+  );
+  const info = useCallback(
+    (msg: string) => showToast(msg, "info"),
+    [showToast],
+  );
 
   return (
     <ToastContext.Provider value={{ showToast, success, error, warn, info }}>
       {children}
-      <ToastContainer 
-        open={toastState.open} 
-        message={toastState.message} 
-        severity={toastState.severity} 
-        onClose={handleClose} 
+      <ToastContainer
+        open={toastState.open}
+        message={toastState.message}
+        severity={toastState.severity}
+        onClose={handleClose}
       />
     </ToastContext.Provider>
   );
